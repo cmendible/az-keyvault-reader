@@ -1,0 +1,20 @@
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: az-keyvault-reader
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: az-keyvault-reader
+        aadpodidbinding: requires-vault
+    spec:
+      containers:
+      - name: az-keyvault-reader
+        image: cmendibl3/az-keyvault-reader:0.1
+        imagePullPolicy: Always
+        env:
+        - name: AZURE_KEYVAULT_NAME
+          value: "<keyvault name>"
