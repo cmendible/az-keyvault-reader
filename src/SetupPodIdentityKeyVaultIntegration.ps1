@@ -49,7 +49,7 @@ az keyvault set-policy `
     --secret-permissions get
 
 # Enable AAD Pod Identity on AKS
-kubectl create -f https://raw.githubusercontent.com/Azure/aad-pod-identity/master/deploy/infra/deployment-rbac.yaml
+kubectl apply -f https://raw.githubusercontent.com/Azure/aad-pod-identity/master/deploy/infra/deployment-rbac.yaml
 
 # Create the Azure Identity and AzureIdentityBinding yaml on the fly
 $k8sAzureIdentityandBinding = @"
@@ -72,4 +72,4 @@ spec:
 "@
 
 # Deploy the yamls 
-$k8sAzureIdentityandBinding | kubectl create -f -
+$k8sAzureIdentityandBinding | kubectl apply -f -
