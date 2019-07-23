@@ -12,9 +12,16 @@ spec:
         aadpodidbinding: requires-vault
     spec:
       containers:
+      - name: busybox
+        image: busybox
+        command:
+          - sleep
+          - "3600"
+        imagePullPolicy: IfNotPresent
       - name: az-keyvault-reader
         image: cmendibl3/az-keyvault-reader:0.1
         imagePullPolicy: Always
         env:
         - name: AZURE_KEYVAULT_NAME
           value: "<keyvault name>"
+      restartPolicy: Always
