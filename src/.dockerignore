@@ -1,1 +1,3 @@
 Dockerfile
+*.ps1
+*.yaml
