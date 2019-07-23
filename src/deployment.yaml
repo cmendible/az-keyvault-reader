@@ -18,10 +18,24 @@ spec:
           - sleep
           - "3600"
         imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            memory: "4Mi"
+            cpu: "100m"
+          limits:
+            memory: "8Mi"
+            cpu: "200m"
       - name: az-keyvault-reader
         image: cmendibl3/az-keyvault-reader:0.1
         imagePullPolicy: Always
         env:
         - name: AZURE_KEYVAULT_NAME
           value: "<keyvault name>"
+        resources:
+          requests:
+            memory: "8Mi"
+            cpu: "100m"
+          limits:
+            memory: "16Mi"
+            cpu: "100m"
       restartPolicy: Always
