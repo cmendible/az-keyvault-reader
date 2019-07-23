@@ -48,6 +48,9 @@ az keyvault set-policy `
     --spn $identity.clientId `
     --secret-permissions get
 
+# Enable AAD Pod Identity on AKS
+kubectl create -f https://raw.githubusercontent.com/Azure/aad-pod-identity/master/deploy/infra/deployment-rbac.yaml
+
 # Create the Azure Identity and AzureIdentityBinding yaml on the fly
 $k8sAzureIdentityandBinding = @"
 apiVersion: "aadpodidentity.k8s.io/v1"
