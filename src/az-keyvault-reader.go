@@ -14,7 +14,7 @@ import (
 )
 
 func getKeyVaultSecret(w http.ResponseWriter, r *http.Request) {
-	// GET the Key Vault name from the Environment
+	// Get the Key Vault name from the Environment
 	keyvaultName := os.Getenv("AZURE_KEYVAULT_NAME")
 	keyvaultEndpoint := fmt.Sprintf("https://%s.vault.azure.net", keyvaultName)
 
@@ -54,7 +54,7 @@ func getKeyVaultSecret(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	log.Print("Azure KeyVault Reader Pod Identity")
+	log.Print("az-keyvault-reader is starting...")
 
 	// Create a route with the secret_name & secret_version variables
 	rtr := mux.NewRouter()
