@@ -11,6 +11,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/services/keyvault/2016-10-01/keyvault"
 	"github.com/Azure/azure-sdk-for-go/services/keyvault/auth"
 	"github.com/gorilla/mux"
+	"github.com/jpillora/ipfilter"
 )
 
 func getKeyVaultSecret(w http.ResponseWriter, r *http.Request) {
@@ -61,6 +62,19 @@ func main() {
 	rtr.HandleFunc("/secrets/{secret_name:[A-Za-z0-9-]+}/{secret_version:[A-Za-z0-9]+}", getKeyVaultSecret).Methods("GET")
 
 	http.Handle("/", rtr)
-	http.ListenAndServe(":8333", nil)
-	log.Println("az-keyvault-reader server listening on :8333")
+
+	// Block any ip by default
+	f, _ := ipfilter.New(ipfilter.Options{
+		BlockByDefault: true,
+	})
+
+	// Allow only localhost calls
+	f.AllowIP("127.0.0.1")
+
+	// Protect the router
+	protectedHandler := f.Wrap(rtr)
+
+	// Start listening
+	log.Println("az-keyvault-reader server will listen on port 8333")
+	http.ListenAndServe(":8333", protectedHandler)
 }
