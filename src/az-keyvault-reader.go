@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 
 	"github.com/Azure/azure-sdk-for-go/services/keyvault/2016-10-01/keyvault"
 	"github.com/Azure/azure-sdk-for-go/services/keyvault/auth"
 	"github.com/gorilla/mux"
-	"github.com/jpillora/ipfilter"
 )
 
 func getKeyVaultSecret(w http.ResponseWriter, r *http.Request) {
@@ -54,6 +54,30 @@ func getKeyVaultSecret(w http.ResponseWriter, r *http.Request) {
 	log.Printf("secret %s with version %s was found and returned", keyvaultSecretName, keyvaultSecretVersion)
 }
 
+type ipFilterMiddleware struct {
+	next http.Handler
+}
+
+func wrap(next http.Handler) http.Handler {
+	return &ipFilterMiddleware{next: next}
+}
+
+func (m *ipFilterMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	allowed := false
+	remoteIP, _, _ := net.SplitHostPort(r.RemoteAddr)
+	if remoteIP == "::1" || remoteIP == "127.0.0.1" {
+		allowed = true
+	}
+	if !allowed {
+		//show simple forbidden text
+		log.Printf("blocked %s", remoteIP)
+		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+		return
+	}
+	//success!
+	m.next.ServeHTTP(w, r)
+}
+
 func main() {
 	log.Print("az-keyvault-reader is starting...")
 
@@ -63,18 +87,9 @@ func main() {
 
 	http.Handle("/", rtr)
 
-	// Block any ip by default
-	f, _ := ipfilter.New(ipfilter.Options{
-		BlockByDefault: true,
-	})
-
-	// Allow only localhost calls
-	f.AllowIP("127.0.0.1")
-
 	// Protect the router
-	protectedHandler := f.Wrap(rtr)
+	protectedHandler := wrap(rtr)
 
-	// Start listening
 	log.Println("az-keyvault-reader server will listen on port 8333")
 	http.ListenAndServe(":8333", protectedHandler)
 }
