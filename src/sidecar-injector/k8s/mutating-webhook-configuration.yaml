@@ -6,7 +6,7 @@ metadata:
     app: az-keyvault-reader-sidecar-injector
     track: prod
 webhooks:
-  - name: "injector.tumblr.com"
+  - name: "injector.mendible.com"
     failurePolicy: "Ignore" # we fail "open" if the webhook is down hard
     rules:
       - operations: ["CREATE"]
