@@ -14,9 +14,10 @@ ADD main.go ./
 ADD webhook.go ./
 RUN CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-w'
 
-FROM scratch
+FROM alpine:latest
 ENV TLS_CERT_FILE=/var/lib/secrets/cert.crt \
     TLS_KEY_FILE=/var/lib/secrets/cert.key
+RUN apk --no-cache add bash
 # Copy the CA certificates
 COPY --from=build /etc/ssl/certs /etc/ssl/certs
 EXPOSE 8443
