@@ -10,7 +10,7 @@ import (
 	"os"
 
 	"github.com/Azure/azure-sdk-for-go/services/keyvault/2016-10-01/keyvault"
-	"github.com/Azure/azure-sdk-for-go/services/keyvault/auth"
+	"github.com/Azure/go-autorest/autorest/azure/auth"
 	"github.com/gorilla/mux"
 )
 
