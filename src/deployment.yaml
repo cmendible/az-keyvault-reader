@@ -19,7 +19,7 @@ spec:
           command:
             - sleep
             - "3600"
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           resources:
             requests:
               memory: "4Mi"
