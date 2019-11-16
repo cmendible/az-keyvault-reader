@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: az-keyvault-reader-sidecar-injector-prod
+  name: az-keyvault-reader-injector-service
   namespace: kube-system
   labels:
-    k8s-app: az-keyvault-reader-sidecar-injector
+    k8s-app: az-keyvault-reader-injector
     track: prod
 spec:
   type: ClusterIP
@@ -14,5 +14,5 @@ spec:
       targetPort: https
       protocol: TCP
   selector:
-    k8s-app: az-keyvault-reader-sidecar-injector
+    k8s-app: az-keyvault-reader-injector
     track: prod

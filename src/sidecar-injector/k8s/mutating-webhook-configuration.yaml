@@ -1,12 +1,13 @@
 apiVersion: admissionregistration.k8s.io/v1beta1
 kind: MutatingWebhookConfiguration
 metadata:
-  name: "cmendibl3-az-keyvault-reader-sidecar-injector-webhook"
+  name: "az-keyvault-reader-injector-webhook"
+  namespace: "kube-system"
   labels:
-    app: az-keyvault-reader-sidecar-injector
+    app: az-keyvault-reader-injector
     track: prod
 webhooks:
-  - name: "injector.mendible.com"
+  - name: "az-keyvault-reader-injector.mendible.com"
     failurePolicy: "Ignore" # we fail "open" if the webhook is down hard
     rules:
       - operations: ["CREATE"]
@@ -15,7 +16,7 @@ webhooks:
         resources: ["pods"]
     clientConfig:
       service:
-        name: "az-keyvault-reader-sidecar-injector-prod"
+        name: "az-keyvault-reader-injector-service"
         namespace: "kube-system"
         path: "/mutate" # what /url/slug to send requests at
       # See README.md for how this was generated!

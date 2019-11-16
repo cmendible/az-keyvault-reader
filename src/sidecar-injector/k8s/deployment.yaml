@@ -1,10 +1,10 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: "az-keyvault-reader-sidecar-injector-prod"
+  name: "az-keyvault-reader-injector"
   namespace: "kube-system"
   labels:
-    k8s-app: "az-keyvault-reader-sidecar-injector"
+    k8s-app: "az-keyvault-reader-injector"
     track: "prod"
 spec:
   replicas: 2
@@ -16,16 +16,16 @@ spec:
   template:
     metadata:
       labels:
-        k8s-app: "az-keyvault-reader-sidecar-injector"
+        k8s-app: "az-keyvault-reader-injector"
         track: "prod"
     spec:
-      serviceAccountName: az-keyvault-reader-sidecar-injector
+      serviceAccountName: az-keyvault-reader-injector
       volumes:
         - name: secrets
           secret:
-            secretName: az-keyvault-reader-sidecar-injector
+            secretName: az-keyvault-reader-injector
       containers:
-        - name: "az-keyvault-reader-sidecar-injector"
+        - name: "az-keyvault-reader-injector"
           imagePullPolicy: Always
           image: cmendibl3/az-keyvault-reader-sidecar-injector:latest
           command: ["entrypoint.sh"]
