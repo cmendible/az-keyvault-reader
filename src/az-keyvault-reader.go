@@ -9,9 +9,10 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/services/keyvault/2016-10-01/keyvault"
-	"github.com/Azure/go-autorest/autorest/azure/auth"
+	"github.com/Azure/azure-sdk-for-go/services/keyvault/auth"
 	"github.com/gorilla/mux"
 )
 
@@ -23,7 +24,10 @@ func getKeyVaultSecret(w http.ResponseWriter, r *http.Request) {
 	// Read variables form the request Url
 	params := mux.Vars(r)
 	keyvaultSecretName := params["secret_name"]
-	keyvaultSecretVersion := params["secret_version"]
+	keyvaultSecretVersion, ok := params["secret_version"]
+	if !ok {
+		keyvaultSecretVersion = ""
+	}
 
 	// Create the key vault client & authorizer
 	keyVaultClient := keyvault.New()
@@ -34,8 +38,7 @@ func getKeyVaultSecret(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(keyvaultSecretVersion) == 0 {
-		var maxresults int32 = 1
-		result, err := keyVaultClient.GetSecretVersions(context.Background(), keyvaultEndpoint, keyvaultSecretName, &maxresults)
+		result, err := keyVaultClient.GetSecretVersions(context.Background(), keyvaultEndpoint, keyvaultSecretName, nil)
 
 		if err != nil {
 			log.Printf("failed to retrieve Keyvault secret versions: %v", err)
@@ -43,9 +46,25 @@ func getKeyVaultSecret(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		versions := result.Values()
-		versionparts := strings.Split(*versions[len(versions)-1].ID, "/")
-		keyvaultSecretVersion = versionparts[len(versionparts)-1]
+		var secretDate time.Time
+		var secretVersion string
+		for result.NotDone() {
+			for _, secret := range result.Values() {
+				if *secret.Attributes.Enabled {
+					updatedTime := time.Time(*secret.Attributes.Updated)
+					if secretDate.IsZero() || updatedTime.After(secretDate) {
+						secretDate = updatedTime
+
+						// Get the version
+						parts := strings.Split(*secret.ID, "/")
+						secretVersion = parts[len(parts)-1]
+					}
+				}
+			}
+
+			result.Next()
+		}
+		keyvaultSecretVersion = secretVersion
 	}
 
 	log.Printf("reading secret %s with version %s", keyvaultSecretName, keyvaultSecretVersion)
@@ -99,6 +118,7 @@ func main() {
 
 	// Create a route with the secret_name & secret_version variables
 	rtr := mux.NewRouter()
+	rtr.HandleFunc("/secrets/{secret_name:[A-Za-z0-9-]+}/", getKeyVaultSecret).Methods("GET")
 	rtr.HandleFunc("/secrets/{secret_name:[A-Za-z0-9-]+}/{secret_version:[A-Za-z0-9]+}", getKeyVaultSecret).Methods("GET")
 
 	http.Handle("/", rtr)
