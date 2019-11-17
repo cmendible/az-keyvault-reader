@@ -81,7 +81,7 @@ func mutate(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 
 	sidecar := corev1.Container{
 		Name:  "az-keyvault-reader-sidecar",
-		Image: "cmendibl3/az-keyvault-reader:0.1",
+		Image: "cmendibl3/az-keyvault-reader:0.2",
 		Env: []corev1.EnvVar{
 			corev1.EnvVar{
 				Name:  "AZURE_KEYVAULT_NAME",
