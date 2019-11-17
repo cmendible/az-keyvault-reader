@@ -88,6 +88,7 @@ func mutate(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 				Value: keyvaultName,
 			},
 		},
+		ImagePullPolicy: corev1.PullAlways,
 	}
 	//     resources:
 	//       requests:
