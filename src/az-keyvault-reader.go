@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/services/keyvault/2016-10-01/keyvault"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
@@ -30,6 +31,21 @@ func getKeyVaultSecret(w http.ResponseWriter, r *http.Request) {
 
 	if err == nil {
 		keyVaultClient.Authorizer = authorizer
+	}
+
+	if len(keyvaultSecretVersion) == 0 {
+		var maxresults int32 = 1
+		result, err := keyVaultClient.GetSecretVersions(context.Background(), keyvaultEndpoint, keyvaultSecretName, &maxresults)
+
+		if err != nil {
+			log.Printf("failed to retrieve Keyvault secret versions: %v", err)
+			http.Error(w, "failed to retrieve the Keyvault secret versions", http.StatusInternalServerError)
+			return
+		}
+
+		versions := result.Values()
+		versionparts := strings.Split(*versions[len(versions)-1].ID, "/")
+		keyvaultSecretVersion = versionparts[len(versionparts)-1]
 	}
 
 	log.Printf("reading secret %s with version %s", keyvaultSecretName, keyvaultSecretVersion)
