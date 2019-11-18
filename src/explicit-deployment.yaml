@@ -18,7 +18,7 @@ spec:
             [
               "sh",
               "-c",
-              "until lsof -Pi :8333 -sTCP:LISTEN -t >/dev/null; do echo waiting for az-keyvault-reader; sleep 2; done; wget -qO- http://127.0.0.1:8333/secrets/<SECRET_NAME>/; sleep 3600",
+              "wget --tries=70 -qO- http://127.0.0.1:8333/secrets<SECRET_NAME>/",
             ]
           imagePullPolicy: Always
           resources:
