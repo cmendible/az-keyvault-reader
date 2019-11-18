@@ -1,0 +1,44 @@
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: az-keyvault-reader-test
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: az-keyvault-reader-test
+        aadpodidbinding: requires-vault
+    spec:
+      containers:
+        - name: busybox
+          image: busybox
+          command:
+            [
+              "sh",
+              "-c",
+              "until lsof -Pi :8333 -sTCP:LISTEN -t >/dev/null; do echo waiting for az-keyvault-reader; sleep 2; done; wget -qO- http://127.0.0.1:8333/secrets/<SECRET_NAME>/; sleep 3600",
+            ]
+          imagePullPolicy: Always
+          resources:
+            requests:
+              memory: "4Mi"
+              cpu: "100m"
+            limits:
+              memory: "8Mi"
+              cpu: "200m"
+        - name: az-keyvault-reader-sidecar
+          image: cmendibl3/az-keyvault-reader:0.2
+          imagePullPolicy: Always
+          env:
+            - name: AZURE_KEYVAULT_NAME
+              value: <AZURE_KEYVAULT_NAME>
+          resources:
+            requests:
+              memory: "8Mi"
+              cpu: "100m"
+            limits:
+              memory: "16Mi"
+              cpu: "200m"
+      restartPolicy: Always
