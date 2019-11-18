@@ -8,7 +8,9 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/services/keyvault/2016-10-01/keyvault"
@@ -24,10 +26,7 @@ func getKeyVaultSecret(w http.ResponseWriter, r *http.Request) {
 	// Read variables form the request Url
 	params := mux.Vars(r)
 	keyvaultSecretName := params["secret_name"]
-	keyvaultSecretVersion, ok := params["secret_version"]
-	if !ok {
-		keyvaultSecretVersion = ""
-	}
+	keyvaultSecretVersion, secretVersionPresent := params["secret_version"]
 
 	// Create the key vault client & authorizer
 	keyVaultClient := keyvault.New()
@@ -37,7 +36,7 @@ func getKeyVaultSecret(w http.ResponseWriter, r *http.Request) {
 		keyVaultClient.Authorizer = authorizer
 	}
 
-	if len(keyvaultSecretVersion) == 0 {
+	if !secretVersionPresent {
 		result, err := keyVaultClient.GetSecretVersions(context.Background(), keyvaultEndpoint, keyvaultSecretName, nil)
 
 		if err != nil {
@@ -121,11 +120,27 @@ func main() {
 	rtr.HandleFunc("/secrets/{secret_name:[A-Za-z0-9-]+}/", getKeyVaultSecret).Methods("GET")
 	rtr.HandleFunc("/secrets/{secret_name:[A-Za-z0-9-]+}/{secret_version:[A-Za-z0-9]+}", getKeyVaultSecret).Methods("GET")
 
-	http.Handle("/", rtr)
-
 	// Protect the router
 	protectedHandler := wrap(rtr)
 
-	log.Println("az-keyvault-reader server will listen on port 8333")
-	http.ListenAndServe(":8333", protectedHandler)
+	srv := &http.Server{
+		Addr:    ":8333",
+		Handler: protectedHandler,
+	}
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil {
+			log.Printf("Failed to listen and serve az-keyvault-reader: %v", err)
+		}
+	}()
+
+	log.Println("az-keyvault-reader serve listening on port 8333")
+
+	// listening OS shutdown singal
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
+	<-signalChan
+
+	log.Printf("Got OS shutdown signal, shutting down az-keyvault-reader gracefully...")
+	srv.Shutdown(context.Background())
 }
