@@ -18,7 +18,7 @@ spec:
             [
               "sh",
               "-c",
-              "wget --tries=70 -qO- http://127.0.0.1:8333/secrets<SECRET_NAME>/",
+              "wget --tries=70 -qO- http://127.0.0.1:8333/secrets/<SECRET_NAME>/",
             ]
           imagePullPolicy: Always
           resources:
