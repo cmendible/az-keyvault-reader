@@ -9,11 +9,9 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
-	"time"
 
-	"github.com/Azure/azure-sdk-for-go/services/keyvault/2016-10-01/keyvault"
+	"github.com/Azure/azure-sdk-for-go/profiles/latest/keyvault/keyvault"
 	"github.com/Azure/azure-sdk-for-go/services/keyvault/auth"
 	"github.com/gorilla/mux"
 )
@@ -26,7 +24,6 @@ func getKeyVaultSecret(w http.ResponseWriter, r *http.Request) {
 	// Read variables form the request Url
 	params := mux.Vars(r)
 	keyvaultSecretName := params["secret_name"]
-	keyvaultSecretVersion, secretVersionPresent := params["secret_version"]
 
 	// Create the key vault client & authorizer
 	keyVaultClient := keyvault.New()
@@ -36,40 +33,10 @@ func getKeyVaultSecret(w http.ResponseWriter, r *http.Request) {
 		keyVaultClient.Authorizer = authorizer
 	}
 
-	if !secretVersionPresent {
-		result, err := keyVaultClient.GetSecretVersions(context.Background(), keyvaultEndpoint, keyvaultSecretName, nil)
-
-		if err != nil {
-			log.Printf("failed to retrieve Keyvault secret versions: %v", err)
-			http.Error(w, "failed to retrieve the Keyvault secret versions", http.StatusInternalServerError)
-			return
-		}
-
-		var secretDate time.Time
-		var secretVersion string
-		for result.NotDone() {
-			for _, secret := range result.Values() {
-				if *secret.Attributes.Enabled {
-					updatedTime := time.Time(*secret.Attributes.Updated)
-					if secretDate.IsZero() || updatedTime.After(secretDate) {
-						secretDate = updatedTime
-
-						// Get the version
-						parts := strings.Split(*secret.ID, "/")
-						secretVersion = parts[len(parts)-1]
-					}
-				}
-			}
-
-			result.Next()
-		}
-		keyvaultSecretVersion = secretVersion
-	}
-
-	log.Printf("reading secret %s with version %s", keyvaultSecretName, keyvaultSecretVersion)
+	log.Printf("reading secret %s", keyvaultSecretName)
 
 	// Get and return the secret
-	secret, err := keyVaultClient.GetSecret(context.Background(), keyvaultEndpoint, keyvaultSecretName, keyvaultSecretVersion)
+	secret, err := keyVaultClient.GetSecret(context.Background(), keyvaultEndpoint, keyvaultSecretName, "")
 	if err != nil {
 		log.Printf("failed to retrieve the Keyvault secret: %v", err)
 		http.Error(w, "failed to retrieve the Keyvault secret", http.StatusInternalServerError)
@@ -85,7 +52,7 @@ func getKeyVaultSecret(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(js)
 
-	log.Printf("secret %s with version %s was found and returned", keyvaultSecretName, keyvaultSecretVersion)
+	log.Printf("secret %s was found and returned", keyvaultSecretName)
 }
 
 type ipFilterMiddleware struct {
